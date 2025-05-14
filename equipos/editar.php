@@ -22,7 +22,9 @@ $equipo->set_tipo($_POST['tipo']);
 
 $resultado = $equipo->actualizaEquipo();
 if ($resultado->error != null) {
-    echo json_encode(["error" => true, "mensaje" => $resultado->errorDetail]);
+    $mensajeError = explode("Error: ", $resultado->getErrorDetail());
+    $mensajeError = $mensajeError[1];
+    echo json_encode(["error" => true, "mensaje" => $mensajeError]);
 } else {
     echo json_encode(["error" => false, "mensaje" => "Equipo guardado exitosamente"]);
 }

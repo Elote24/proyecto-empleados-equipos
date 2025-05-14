@@ -27,7 +27,9 @@ $empleados->set_departamento($_POST['departamento']);
 
 $resultado = $empleados->actualizaEmpleado();
 if ($resultado->error != null) {
-    echo json_encode(["error" => true, "mensaje" => $resultado->errorDetail]);
-} else {
-    echo json_encode(["error" => false, "mensaje" => "Empleado guardado exitosamente"]);
+    $mensajeError = explode("Error: ", $resultado->getErrorDetail());
+    $mensajeError = $mensajeError[1];
+    echo json_encode(["error" => true, "mensaje" => $mensajeError]);
+}  else {
+    echo json_encode(["error" => false, "mensaje" => "Empleado modficado exitosamente"]);
 }

@@ -181,6 +181,7 @@
     <script src="../assets/js/empleados.js"></script>
     <script src="../assets/libs/Bootstrap/bootstrap.bundle.js"></script>
     <script src="../assets/libs/SweetAlert/sweetalert2.all.min.js"> </script>
+    <script src="../assets/js/mensajeSweetAlert.js"> </script>
 
 
 </body>

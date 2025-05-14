@@ -83,9 +83,9 @@ class conexion {
             return true; 
     
         } catch (Exception $ex) {
-            $this->error = " Error en la base de datos";
-            $this->errorDetail = $ex->getMessage();
-            error_log("Error SQL: " . $ex->getMessage()); // Guardar el error en el log
+            $this->error = true;
+        $this->errorDetail = $ex->getMessage();
+            error_log("Error SQL: " . $ex->getMessage()); 
             return false; 
         }
     }

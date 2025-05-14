@@ -4,8 +4,9 @@ require_once("../equipos/equipo.php");
 
 $equipos = new Equipo(); 
 $equipos = $equipos->consultarEquipos(); 
-if ($equipos) {
-    echo json_encode( $equipos );
+
+if (!empty($equipos) && is_array($equipos)) {
+    echo json_encode($equipos);
 } else {
-    echo "No se encontraron empleados.";
+    echo json_encode(["error" => "No se encontraron equipos"]);
 }

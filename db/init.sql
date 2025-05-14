@@ -1,8 +1,12 @@
 create database ElliotCrud
 go
 use ElliotCrud
-
 go
+-- drop table AsignacionesEquipos
+-- drop table Equipos
+-- drop table Empleados
+-- drop table Departamentos
+
 ---------------Creacion de Tablas----------------------------------------
 CREATE TABLE Departamentos (
     ID INT PRIMARY KEY IDENTITY(1,1),
@@ -111,7 +115,7 @@ GO
 ------------------------------------Procedimientos-----------------------
 -- drop procedure proc_ObtenerEmpleados
 
-CREATE  PROCEDURE proc_ObtenerEmpleados
+CREATE OR ALTER  PROCEDURE proc_ObtenerEmpleados
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -135,7 +139,7 @@ END;
 
 GO
 -- drop procedure proc_InsertarEmpleado
-CREATE PROCEDURE proc_InsertarEmpleado
+CREATE OR ALTER PROCEDURE proc_InsertarEmpleado
     @Nombre VARCHAR(50),
     @Apellido_Paterno VARCHAR(50),
     @Apellido_Materno VARCHAR(50),
@@ -147,13 +151,26 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    BEGIN TRY
+        IF EXISTS (SELECT 1 FROM Empleados WHERE CORREO = @Correo)
+        BEGIN
+            RAISERROR('Error: El correo ya esta registrado con otro empleado.', 16, 1);
+            RETURN;
+        END
+
     INSERT INTO Empleados (Nombre, Apellido_Paterno, Apellido_Materno, Edad, Correo, numero_telefono, ID_Departamento)
     VALUES (@Nombre, @Apellido_Paterno, @Apellido_Materno, @Edad, @Correo, @numero_telefono, @ID_Departamento);
+	PRINT 'Empleado insertado correctamente';
+END TRY
+    BEGIN CATCH
+        DECLARE @ErrorMessage NVARCHAR(400) = ERROR_MESSAGE();
+        RAISERROR(@ErrorMessage, 16, 1);
+    END CATCH
 END;
 
 GO
 -- drop procedure proc_ActualizarEmpleado
-CREATE PROCEDURE proc_ActualizarEmpleado
+CREATE OR ALTER PROCEDURE proc_ActualizarEmpleado
     @ID INT,
     @Nombre VARCHAR(50),
     @Apellido_Paterno VARCHAR(50),
@@ -166,6 +183,13 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    BEGIN TRY
+        IF NOT EXISTS (SELECT 1 FROM Empleados WHERE ID = @ID)
+        BEGIN
+            RAISERROR('Error: El empleado con el ID  no existe.', 16, 1);
+            RETURN;
+        END
+
     UPDATE Empleados
     SET 
         Nombre = @Nombre,
@@ -176,26 +200,47 @@ BEGIN
         numero_telefono = @numero_telefono,
         ID_Departamento = @ID_Departamento
     WHERE ID = @ID;
+	PRINT 'Empleado modificado correctamente';
+
+    END TRY
+    BEGIN CATCH
+        DECLARE @ErrorMessage NVARCHAR(400) = ERROR_MESSAGE();
+        RAISERROR(@ErrorMessage, 16, 1);
+    END CATCH
 END;
 
 
 GO
 
 -- drop procedure proc_eliminarEmpleado
-CREATE PROCEDURE proc_eliminarEmpleado
+CREATE OR ALTER PROCEDURE proc_eliminarEmpleado
     @ID INT
 AS
 BEGIN
     SET NOCOUNT ON;
 
+    BEGIN TRY
+        IF NOT EXISTS (SELECT 1 FROM Empleados WHERE ID = @ID)
+        BEGIN
+            RAISERROR('Error: El empleado con el ID  no existe.', 16, 1);
+            RETURN;
+        END
+
     UPDATE Empleados
     SET Estatus = '0'
     WHERE ID = @ID;
+	PRINT 'Empleado eliminado correctamente';
+
+    END TRY
+    BEGIN CATCH
+        DECLARE @ErrorMessage NVARCHAR(400) = ERROR_MESSAGE();
+        RAISERROR(@ErrorMessage, 16, 1);
+    END CATCH
 END;
 
 GO
 -- drop procedure proc_ObtenerDepartamentos
-CREATE PROCEDURE proc_ObtenerDepartamentos
+CREATE OR ALTER PROCEDURE proc_ObtenerDepartamentos
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -205,7 +250,7 @@ END;
 
 GO
 -- drop procedure proc_ObtenerEquipos
-CREATE PROCEDURE proc_ObtenerEquipos
+CREATE OR ALTER PROCEDURE proc_ObtenerEquipos
 AS
 BEGIN
     SELECT 
@@ -224,84 +269,163 @@ END;
 
 GO
  -- drop procedure proc_ActualizarEquipo
-CREATE PROCEDURE proc_ActualizarEquipo
+CREATE OR ALTER PROCEDURE proc_ActualizarEquipo
     @ID INT,
     @Nombre VARCHAR(100),
     @Tipo VARCHAR(50)
 AS
 BEGIN
+SET NOCOUNT ON;
+
+    BEGIN TRY
+        IF NOT EXISTS (SELECT 1 FROM Equipos WHERE ID = @ID)
+        BEGIN
+            RAISERROR('Error: El equipo con el ID  no existe.', 16, 1);
+            RETURN;
+        END
     UPDATE Equipos
     SET Nombre = @Nombre,
         Tipo = @Tipo
     WHERE ID = @ID;
+	PRINT 'Equipo modificado correctamente';
+
+    END TRY
+    BEGIN CATCH
+        DECLARE @ErrorMessage NVARCHAR(400) = ERROR_MESSAGE();
+        RAISERROR(@ErrorMessage, 16, 1);
+    END CATCH
 END;
 
 GO
 -- drop procedure proc_eliminarEquipo
-CREATE PROCEDURE proc_eliminarEquipo
+CREATE OR ALTER PROCEDURE proc_eliminarEquipo
     @ID INT
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    UPDATE Equipos
-    SET Estatus = '0'
-    WHERE ID = @ID;
+    BEGIN TRY
+        IF NOT EXISTS (SELECT 1 FROM Equipos WHERE ID = @ID)
+        BEGIN
+            RAISERROR('Error: El equipo con el ID  no existe.', 16, 1);
+            RETURN;
+        END
+        UPDATE Equipos
+        SET Estatus = '0'
+        WHERE ID = @ID;
+
+        PRINT 'Equipo eliminado correctamente';
+
+    END TRY
+    BEGIN CATCH
+        DECLARE @ErrorMessage NVARCHAR(400) = ERROR_MESSAGE();
+        RAISERROR(@ErrorMessage, 16, 1);
+    END CATCH
 END;
 
 
 GO
 
 --drop procedure proc_insertarEquipo
-CREATE PROCEDURE proc_insertarEquipo
+CREATE OR ALTER PROCEDURE proc_insertarEquipo
     @Nombre VARCHAR(100),
     @Tipo VARCHAR(50),
     @Numero_Serie VARCHAR(50)
 AS
 BEGIN
-    INSERT INTO Equipos (Nombre, Tipo, Numero_Serie, ID_Empleado)
-    VALUES (@Nombre, @Tipo, @Numero_Serie,  NULL);
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        IF EXISTS (SELECT 1 FROM Equipos WHERE Numero_Serie = @Numero_Serie)
+        BEGIN
+            RAISERROR('Error: El número de serie ya existe en la base de datos.', 16, 1);
+            RETURN;
+        END
+
+        INSERT INTO Equipos (Nombre, Tipo, Numero_Serie, ID_Empleado)
+        VALUES (@Nombre, @Tipo, @Numero_Serie, NULL);
+
+        PRINT 'Equipo insertado correctamente';
+
+    END TRY
+    BEGIN CATCH
+        DECLARE @ErrorMessage NVARCHAR(400) = ERROR_MESSAGE();
+        RAISERROR(@ErrorMessage, 16, 1);
+    END CATCH
 END;
 
 
 GO
 --drop procedure proc_AsignarEquipo
-CREATE PROCEDURE proc_AsignarEquipo
+CREATE OR ALTER PROCEDURE proc_AsignarEquipo
     @ID_Equipo INT,
     @ID_Empleado INT = NULL 
 AS
 BEGIN
+    SET NOCOUNT ON;
 
-    IF EXISTS (SELECT 1 FROM AsignacionesEquipos WHERE ID_Equipo = @ID_Equipo)
-    BEGIN
+    BEGIN TRY
+        IF NOT EXISTS (SELECT 1 FROM Equipos WHERE ID = @ID_Equipo)
+        BEGIN
+            RAISERROR('Error: El equipo especificado no existe.', 16, 1);
+            RETURN;
+        END
+
         IF @ID_Empleado IS NULL
         BEGIN
-            DELETE FROM AsignacionesEquipos
-			WHERE ID_Equipo = @ID_Equipo;
-
-            UPDATE Equipos
-            SET ID_Empleado = NULL
-            WHERE ID = @ID_Equipo;
+            DELETE FROM AsignacionesEquipos WHERE ID_Equipo = @ID_Equipo;
+            UPDATE Equipos SET ID_Empleado = NULL WHERE ID = @ID_Equipo;
         END
         ELSE
         BEGIN
-            UPDATE AsignacionesEquipos
-            SET ID_Empleado = @ID_Empleado, Fecha_Asignacion = GETDATE()
-            WHERE ID_Equipo = @ID_Equipo;
+            IF NOT EXISTS (SELECT 1 FROM Empleados WHERE ID = @ID_Empleado)
+            BEGIN
+                RAISERROR('Error: El empleado especificado no existe.', 16, 1);
+                RETURN;
+            END
 
-            UPDATE Equipos
-            SET ID_Empleado = @ID_Empleado
-            WHERE ID = @ID_Equipo;
+            IF EXISTS (SELECT 1 FROM AsignacionesEquipos WHERE ID_Equipo = @ID_Equipo)
+            BEGIN
+                UPDATE AsignacionesEquipos
+                SET ID_Empleado = @ID_Empleado, Fecha_Asignacion = GETDATE()
+                WHERE ID_Equipo = @ID_Equipo;
+            END
+            ELSE
+            BEGIN
+                INSERT INTO AsignacionesEquipos (ID_Empleado, ID_Equipo, Fecha_Asignacion)
+                VALUES (@ID_Empleado, @ID_Equipo, GETDATE());
+            END
+            
+            UPDATE Equipos SET ID_Empleado = @ID_Empleado WHERE ID = @ID_Equipo;
         END
-    END
-    ELSE
-    BEGIN
-        INSERT INTO AsignacionesEquipos (ID_Empleado, ID_Equipo, Fecha_Asignacion)
-        VALUES (@ID_Empleado, @ID_Equipo, GETDATE());
 
-        UPDATE Equipos
-        SET ID_Empleado = @ID_Empleado
-        WHERE ID = @ID_Equipo;
-    END
+    END TRY
+    BEGIN CATCH
+	    DECLARE @ErrorMessage NVARCHAR(400) = ERROR_MESSAGE();
+        RAISERROR(@ErrorMessage, 16, 1);
+    END CATCH
 END;
+
+--
+
+GO
+CREATE OR ALTER TRIGGER trg_DesasignarEquipo
+ON Empleados
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE Equipos
+    SET ID_Empleado = NULL
+    WHERE ID_Empleado IN (
+        SELECT ID FROM Empleados WHERE Estatus = '0'
+    );
+END;
+
+
+
+
+
+
 

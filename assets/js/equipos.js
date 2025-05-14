@@ -13,11 +13,18 @@ async function actualizarTabla() {
             throw new Error(`Error HTTP: ${response.status}`);
         }
 
+        
+        
         const data = await response.json();
+        if (!data || data.length === 0 || data.error) {
+            document.querySelector("#tablaEquipos").innerHTML = "<tr class='text-center'><td colspan='8'>No se encontraron Equipos</td></tr>";
+            return;
+        }
         equipos = data;
         configurarPaginacion(data); 
 
     } catch (error) {
+        document.querySelector("#tablaEquipos").innerHTML = "<tr class='text-center'><td colspan='8'>Ocurrio un error al cargar los equipos</td></tr>";
         console.error("Error al cargar los datos:", error);
     }
 }
@@ -157,17 +164,8 @@ async function guardarEquipo() {
     let tipo = document.getElementById("tipoAlta").value;
     let numeroSerie = document.getElementById("numeroSerieAlta").value;
 
-    const result = await Swal.fire({
-        title: "¿Quieres guardar este equipo?",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#3085d6",
-        cancelButtonColor: "#d33",
-        confirmButtonText: "Sí, guardar",
-        cancelButtonText: "Cancelar"
-    });
-
-    if (!result.isConfirmed) return; 
+    const result = await mostrarConfirmacion("¿Quieres guardar este equipo?", "");
+    if (!result.isConfirmed) return;
     let formData = new FormData();
     formData.append("nombre", nombre);
     formData.append("tipo", tipo);
@@ -182,21 +180,9 @@ async function guardarEquipo() {
         const data = await response.json();
 
         if (data.error) {
-            Swal.fire({
-                title: "Error",
-                text: data.mensaje.join("\n"),
-                icon: "error",
-                confirmButtonText: "Cerrar",
-                confirmButtonColor: "#d33"
-            });
+            mostrarError("Error", data.mensaje);
         } else {
-            Swal.fire({
-                title: "Equipo Guardado!",
-                text: "El equipo ha sido creado exitosamente.",
-                icon: "success",
-                confirmButtonText: "OK",
-                confirmButtonColor: "#3085d6"
-            });
+            mostrarExito("¡Equipo Guardado!", data.mensaje);
 
             let modal = document.getElementById("modalAlta"); 
             let modalInstance = bootstrap.Modal.getInstance(modal);
@@ -207,13 +193,7 @@ async function guardarEquipo() {
 
     } catch (error) {
         console.error("Error:", error);
-        Swal.fire({
-            title: "Error",
-            text: "No se pudo guardar el equipo.",
-            icon: "error",
-            confirmButtonText: "Cerrar",
-            confirmButtonColor: "#d33"
-        });
+        mostrarError("Error", error.mensaje);
     }
 }
 
@@ -226,17 +206,8 @@ async function editarEquipo() {
     let numeroSerie = document.getElementById("numeroSerieEditar").value;
 
     try {
-        const result = await Swal.fire({
-            title: "¿Quieres modificar este equipo?",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#3085d6",
-            cancelButtonColor: "#d33",
-            confirmButtonText: "Sí, guardar",
-            cancelButtonText: "Cancelar"
-        });
-
-        if (!result.isConfirmed) return; 
+        const result = await mostrarConfirmacion("¿Quieres modificar este equipo?", "");
+        if (!result.isConfirmed) return;
 
         let formData = new FormData();
         formData.append("id", id);
@@ -252,21 +223,10 @@ async function editarEquipo() {
         const data = await response.json();
 
         if (data.error) {
-            await Swal.fire({
-                title: "Error",
-                text: data.mensaje.join("\n"),
-                icon: "error",
-                confirmButtonText: "Cerrar",
-                confirmButtonColor: "#d33"
-            });
+            mostrarError("Error", data.mensaje);
+
         } else {
-            await Swal.fire({
-                title: "Equipo Modificado!",
-                text: "El equipo ha sido actualizado exitosamente.",
-                icon: "success",
-                confirmButtonText: "OK",
-                confirmButtonColor: "#3085d6"
-            });
+            mostrarExito("¡Equipo Modificado!", data.mensaje);
 
             let modal = document.getElementById("modalEditar");
             let modalInstance = bootstrap.Modal.getInstance(modal);
@@ -277,144 +237,84 @@ async function editarEquipo() {
 
     } catch (error) {
         console.error("Error:", error);
-        await Swal.fire({
-            title: "Error",
-            text: "No se pudo modificar el equipo.",
-            icon: "error",
-            confirmButtonText: "Cerrar",
-            confirmButtonColor: "#d33"
-        });
+        mostrarError("Error", "No se pudo modificar el equipo.");
     }
 }
 
 
 
-function asignarEquipo () { 
+async function asignarEquipo () { 
     let id= document.getElementById("idEquipoAsignar").value;
     let empleado= document.getElementById("empleadoSelectAlta").value;
     if (empleado=="") {
-         Swal.fire({ icon: "error", title: "Error", text: "Selecciona un Empleado " });
+        mostrarError("Error", "Selecciona un empleado.");
         return;
     }
-
-    Swal.fire({
-        title: "¿Quieres asignar este equipo?",
-        text: "",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#3085d6",
-        cancelButtonColor: "#d33",
-        confirmButtonText: "Sí, asignar",
-        cancelButtonText: "Cancelar"
-    }).then((result) => {
-        if (result.isConfirmed) {
+    try{
+    const result = await mostrarConfirmacion("¿Quieres asignar este equipo?", "");
+        if (!result.isConfirmed) return;
     let formData = new FormData();
     formData.append("id", id);
     formData.append("empleado", empleado);
 
 
-    fetch("../equipos/asignarEquipo.php", {
+    const response = await fetch("../equipos/asignarEquipo.php", {
         method: "POST",
         body: formData
     })
-    .then(response => response.text())
-    .then(data => {
-        if (data.error) {
-            Swal.fire({
-                title: "Error",
-                text: data.mensaje.join("\n"),
-                icon: "error",
-                confirmButtonText: "Cerrar",
-                confirmButtonColor: "#d33"
-            });
-        } else {
-            Swal.fire({
-                title: "Equipo Asignado!",
-                text: "El equipo ha sido asignado exitosamente.",
-                icon: "success",
-                confirmButtonText: "OK",
-                confirmButtonColor: "#3085d6"
-            });
+
+    const data = await response.json();
+
+    if (data.error) {
+        mostrarError("Error", data.mensaje);
+
+    }  else {
+            mostrarExito("Equipo Asignado!", data.mensaje);
             let modal = document.getElementById("modalASignar"); 
             let modalInstance = bootstrap.Modal.getInstance(modal);
             modalInstance.hide();
             actualizarTabla();
             
-            
-            
-            
         }
-    })
-    .catch(error => {
+    }
+    catch(error ) {
         console.error("Error:", error);
-        Swal.fire({
-            title: "Error",
-            text: "No se pudo asignar el equipo.",
-            icon: "error",
-            confirmButtonText: "Cerrar",
-            confirmButtonColor: "#d33"
-        });
-    });
+        mostrarError("Error", "No se pudo asignar el equipo.");
 }
-});
 }
 
 
 
-function eliminarEquipo (id) {
-    Swal.fire({
-        title: "¿Quieres eliminar este equipo?",
-        text: "",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#3085d6",
-        cancelButtonColor: "#d33",
-        confirmButtonText: "Sí, eliminar",
-        cancelButtonText: "Cancelar"
-    }).then((result) => {
-        if (result.isConfirmed) {
+
+async function eliminarEquipo (id) {
+    try{
+    const result = await mostrarConfirmacion("Estas seguro que deseas eliminar este equipo?", "Se eliminara el equipo para siempre.");
+    if (!result.isConfirmed) return;
     let formData = new FormData();
     formData.append("id", id);
 
-    fetch("../equipos/eliminar.php", {
+    const response = await fetch("../equipos/eliminar.php", {
         method: "POST",
         body: formData
     })
-    .then(response => response.text())
-    .then(data => {
+    const data = await response.json();
+
         if (data.error) {
-            Swal.fire({
-                title: "Error",
-                text: data.mensaje.join("\n"),
-                icon: "error",
-                confirmButtonText: "Cerrar",
-                confirmButtonColor: "#d33"
-            });
-        } else {
-            Swal.fire({
-                title: "Equipo Eliminado!",
-                text: "El equipo ha sido eliminado exitosamente.",
-                icon: "success",
-                confirmButtonText: "OK",
-                confirmButtonColor: "#3085d6"
-            });
+            mostrarError("Error", data.mensaje.join("\n"));
+        }
+
+         else {
+            mostrarExito("Equipo Eliminado!", data.mensaje);
             actualizarTabla();
             
         }
-    })
-    .catch(error => {
+    }
+    catch(error) {
         console.error("Error:", error);
-        Swal.fire({
-            title: "Error",
-            text: "No se pudo eliminar el equipo.",
-            icon: "error",
-            confirmButtonText: "Cerrar",
-            confirmButtonColor: "#d33"
-        });
-    });
+        mostrarError("Error", "No se pudo eliminar el equipo.");
+    }
 }
-});
-}
+
 
 async function llenarEmpleados() {
     try {
@@ -452,8 +352,5 @@ function limpiarCamposAlta() {
     document.getElementById("tipoAlta").value = "";
     document.getElementById("numeroSerieAlta").value = "";
 }
-
-
-
 
 

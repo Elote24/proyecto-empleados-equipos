@@ -6,7 +6,7 @@ $errores = [];
 
 foreach ($campos_obligatorios as $campo) {
     if (empty($_POST[$campo])) {
-        $errores[] = "El campo $campo es obligatorio.";
+        $errores[] = " El campo $campo es obligatorio";
     }
 }
 
@@ -21,8 +21,13 @@ $equipo->set_tipo($_POST['tipo']);
 $equipo->set_numeroSerie($_POST['numeroSerie']);
 
 $resultado = $equipo->guardarEquipo();
+
+
+
 if ($resultado->error != null) {
-    echo json_encode(["error" => true, "mensaje" => $resultado->errorDetail]);
+    $mensajeError = explode("Error: ", $resultado->getErrorDetail());
+    $mensajeError = $mensajeError[1];
+    echo json_encode(["error" => true, "mensaje" => $mensajeError]);
 } else {
     echo json_encode(["error" => false, "mensaje" => "Equipo guardado exitosamente"]);
 }

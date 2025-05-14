@@ -22,8 +22,10 @@ $equipo->set_empleado($_POST['empleado']);
 
 
 $resultado = $equipo->asignarEquipo(); 
-if ($resultado->error!=null) {
-    echo json_encode(["error" => true, "mensaje" => $resultado->errorDetail]);
+if ($resultado->error != null) {
+    $mensajeError = explode("Error: ", $resultado->getErrorDetail());
+    $mensajeError = $mensajeError[1];
+    echo json_encode(["error" => true, "mensaje" => $mensajeError]);
 } else {
     echo json_encode(["error" => false, "mensaje" => "Equipo asignado exitosamente"]);
 }
